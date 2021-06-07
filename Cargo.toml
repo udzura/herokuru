@@ -20,3 +20,7 @@ tokio = { version = "1.0", default-features = false, features = ["macros", "rt-m
 members = [
   "herokuru_get",
 ]
+
+[features]
+default = ["reqwest/native-tls"]
+rustls = ["reqwest/rustls-tls"]

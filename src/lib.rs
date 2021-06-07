@@ -87,12 +87,12 @@ pub struct Release {
     pub created_at: DateTime<Utc>,
     pub description: String,
     pub status: String,
-    pub slug: Slug,
+    pub slug: Option<Slug>,
     pub updated_at: DateTime<Utc>,
     pub user: User,
     pub version: i32,
     pub current: bool,
-    pub output_stream_url: Url,
+    pub output_stream_url: Option<Url>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -120,11 +120,15 @@ pub struct Herokuru {
 
 #[derive(Debug, Clone)]
 pub struct ReleaseResponse {
-    releases: Vec<Release>,
-    next: Option<Page>,
+    pub releases: Vec<Release>,
+    pub next: Option<Page>,
 }
 
 impl Herokuru {
+    pub fn builder() -> HerokuruBuilder {
+        HerokuruBuilder::new()
+    }
+
     pub async fn releases(
         &self,
         app_name: impl Into<String>,
