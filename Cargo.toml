@@ -2,6 +2,11 @@
 name = "herokuru"
 version = "0.0.1"
 authors = ["Uchio Kondo <udzura@udzura.jp>"]
+repository = "https://github.com/udzura/herokuru"
+keywords = ["heroku", "api", "async"]
+license-file = "LICENSE"
+readme = "README.md"
+description = "Yet another Heroku client for Rust. Async ready."
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
