@@ -118,29 +118,44 @@ pub struct Herokuru {
     pub base_url: Url,
 }
 
-#[derive(Debug, Clone)]
-pub struct ReleaseResponse {
-    pub releases: Vec<Release>,
-    pub next: Option<Page>,
-}
-
 impl Herokuru {
     pub fn builder() -> HerokuruBuilder {
         HerokuruBuilder::new()
     }
 
-    pub async fn releases(
+    pub fn releases(&self, app_name: impl Into<String>) -> ReleasesRequest {
+        ReleasesRequest {
+            heroku: &self,
+            app_name: app_name.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReleasesResponse {
+    pub releases: Vec<Release>,
+    pub next: Option<Page>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReleasesRequest<'a> {
+    heroku: &'a Herokuru,
+    pub app_name: String,
+}
+
+impl ReleasesRequest<'_> {
+    pub async fn list(
         &self,
-        app_name: impl Into<String>,
         page: Option<Page>,
-    ) -> Result<Option<ReleaseResponse>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<ReleasesResponse>, Box<dyn std::error::Error>> {
         match page {
             None => Ok(None),
             Some(page) => {
-                let path = format!("apps/{}/releases", app_name.into());
-                let url = self.base_url.join(&path)?;
+                let path = format!("apps/{}/releases", self.app_name);
+                let url = self.heroku.base_url.join(&path)?;
 
                 let res = self
+                    .heroku
                     .client
                     .get(url)
                     .header("Range", page.range_format.parse::<HeaderValue>().unwrap())
@@ -155,8 +170,12 @@ impl Herokuru {
                 let json: serde_json::Value = res.json().await?;
                 let releases: Vec<Release> = serde_json::from_value(json)?;
 
-                Ok(ReleaseResponse { releases, next }.into())
+                Ok(ReleasesResponse { releases, next }.into())
             }
         }
+    }
+
+    pub async fn first_list(&self) -> Result<Option<ReleasesResponse>, Box<dyn std::error::Error>> {
+        self.list(Page::first_releases().into()).await
     }
 }

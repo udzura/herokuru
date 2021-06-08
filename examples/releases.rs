@@ -7,7 +7,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()
         .unwrap();
     let mut page = Some(Page::first_releases());
-    while let Some(res) = heroku.releases(std::env::var("APP_NAME")?, page).await? {
+    while let Some(res) = heroku
+        .releases(std::env::var("APP_NAME")?)
+        .list(page)
+        .await?
+    {
         for release in res.releases.into_iter() {
             println!("release: {}", release.version);
         }
