@@ -1,6 +1,6 @@
 [package]
 name = "herokuru"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Uchio Kondo <udzura@udzura.jp>"]
 repository = "https://github.com/udzura/herokuru"
 keywords = ["heroku", "api", "async"]
