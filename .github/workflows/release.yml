@@ -20,12 +20,13 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
-          target: ${{matrix.target}}
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --workspace --release --no-default-features --features rustls --target ${{matrix.target}}
+          toolchain: nightly
+      - name: cargo do build
+        run: |
+          cd herokuru_get
+          rustup target add ${{matrix.target}}
+          cargo build --release --target x86_64-unknown-linux-musl --bins
+          cd -
       - name: check location
         run: |
           ls -l target/release/
