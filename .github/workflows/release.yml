@@ -25,7 +25,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --workspace --release --target ${{matrix.target}}
+          args: --workspace --release --no-default-features --features rustls --target ${{matrix.target}}
       - name: check location
         run: |
           ls -l target/release/
