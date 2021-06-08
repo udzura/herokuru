@@ -10,6 +10,13 @@ readme = "../README.md"
 
 [dependencies]
 herokuru = { path = "..", default-features = false, features = ["rustls"] }
+reqwest = { version = ">= 0.11", default-features = false, features = ["json"] }
+serde = { version = ">= 1.0", features = ["derive"] }
+serde_json = ">= 1.0"
+chrono = { version = ">= 0.4", features = ["serde"] }
 env_logger = "0.8.3"
 log = "0.4.14"
 structopt = "0.3.21"
+envy = "^0.3"
+csv = "^1.1"
+tokio = { version = "1.0", default-features = false, features = ["macros", "rt-multi-thread", "time"] }
