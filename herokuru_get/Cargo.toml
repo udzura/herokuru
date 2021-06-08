@@ -3,7 +3,13 @@ name = "herokuru_get"
 version = "0.1.0"
 authors = ["Uchio Kondo <udzura@udzura.jp>"]
 edition = "2018"
+license-file = "../LICENSE"
+readme = "../README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+herokuru = { path = "..", default-features = false, features = ["rustls"] }
+env_logger = "0.8.3"
+log = "0.4.14"
+structopt = "0.3.21"
