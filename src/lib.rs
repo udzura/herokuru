@@ -1,6 +1,37 @@
 use chrono::{DateTime, Utc};
 use reqwest::{header::HeaderValue, Url};
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
+
+mod errors {
+    use snafu::{Backtrace, Snafu};
+
+    #[derive(Snafu, Debug)]
+    #[snafu(visibility = "pub")]
+    pub enum Error {
+        //#[snafu(display("Could not build request"))]
+        Build {
+            source: reqwest::header::InvalidHeaderValue,
+            backtrace: Backtrace,
+        },
+        //#[snafu(display("Invalid URL: {}", path))]
+        InvalidUrl {
+            path: String,
+            source: url::ParseError,
+            backtrace: Backtrace,
+        },
+        //#[snafu(display("Failed to access http"))]
+        Http {
+            source: reqwest::Error,
+            backtrace: Backtrace,
+        },
+        //#[snafu(display("invalid JSON"))]
+        Json {
+            source: serde_json::Error,
+            backtrace: Backtrace,
+        },
+    }
+}
 
 #[derive(Default)]
 pub struct HerokuruBuilder {
@@ -23,24 +54,28 @@ impl HerokuruBuilder {
         self
     }
 
-    pub fn build(self) -> Option<Herokuru> {
+    pub fn build(self) -> Result<Herokuru, crate::errors::Error> {
         let mut hmap = reqwest::header::HeaderMap::new();
         hmap.append(
             reqwest::header::AUTHORIZATION,
-            format!("Bearer {}", self.token).parse().unwrap(),
+            format!("Bearer {}", self.token)
+                .parse()
+                .context(errors::Build)?,
         );
         hmap.append(
             reqwest::header::ACCEPT,
-            "application/vnd.heroku+json; version=3".parse().unwrap(),
+            "application/vnd.heroku+json; version=3"
+                .parse()
+                .context(errors::Build)?,
         );
 
         let client = reqwest::Client::builder()
             .user_agent("Reqwest/herokuru version 0.1.0")
             .default_headers(hmap)
             .build()
-            .unwrap();
+            .context(errors::Http)?;
 
-        Some(Herokuru {
+        Ok(Herokuru {
             client,
             base_url: self
                 .base_url
@@ -147,12 +182,16 @@ impl ReleasesRequest<'_> {
     pub async fn list(
         &self,
         page: Option<Page>,
-    ) -> Result<Option<ReleasesResponse>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<ReleasesResponse>, crate::errors::Error> {
         match page {
             None => Ok(None),
             Some(page) => {
                 let path = format!("apps/{}/releases", self.app_name);
-                let url = self.heroku.base_url.join(&path)?;
+                let url = self
+                    .heroku
+                    .base_url
+                    .join(&path)
+                    .context(errors::InvalidUrl { path })?;
 
                 let res = self
                     .heroku
@@ -160,22 +199,23 @@ impl ReleasesRequest<'_> {
                     .get(url)
                     .header("Range", page.range_format.parse::<HeaderValue>().unwrap())
                     .send()
-                    .await?;
+                    .await
+                    .context(errors::Http)?;
                 let headers = res.headers();
 
                 let next = headers.get("next-range").map(|range_format| Page {
                     range_format: range_format.to_str().unwrap().into(),
                     ..Default::default()
                 });
-                let json: serde_json::Value = res.json().await?;
-                let releases: Vec<Release> = serde_json::from_value(json)?;
+                let json: serde_json::Value = res.json().await.context(errors::Http)?;
+                let releases: Vec<Release> = serde_json::from_value(json).context(errors::Json)?;
 
                 Ok(ReleasesResponse { releases, next }.into())
             }
         }
     }
 
-    pub async fn first_list(&self) -> Result<Option<ReleasesResponse>, Box<dyn std::error::Error>> {
+    pub async fn first_list(&self) -> Result<Option<ReleasesResponse>, crate::errors::Error> {
         self.list(Page::first_releases().into()).await
     }
 }
