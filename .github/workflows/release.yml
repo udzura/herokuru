@@ -1,12 +1,8 @@
 name: Release
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  #push:
-  #  tags: ['0.*']
+  release:
+    types: [created]
 
 jobs:
   release:
@@ -18,15 +14,9 @@ jobs:
         target: [x86_64-unknown-linux-musl]
     steps:
       - uses: actions/checkout@master
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-      - name: cargo do build
-        run: |
-          cd herokuru_get
-          rustup target add ${{matrix.target}}
-          cargo build --release --target x86_64-unknown-linux-musl --bins
-          cd -
-      - name: check location
-        run: |
-          ls -l target/release/
+      - name: Compile and release
+        uses: rust-build/rust-build.action@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUSTTARGET: ${{ matrix.target }}
+          SRC_DIR: herokuru_get
